@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CG Final Project</title>
+    <script src="https://preview.babylonjs.com/babylon.js"></script> <!-- import babylonjs -->
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.js"></script> <!-- GUI for babylonjs -->
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script> <!-- scene loaders -->
+    <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script> <!-- scene interactions -->
+    
+    <style>
+        html, body
+        {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #render
+        {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="render" touch-action="none"> <!-- canvas creation -->
+    <script>
+        var canvas = document.getElementById("render"); // initialise the canvas
+        var engine = new BABYLON.Engine(canvas, true); // initialise the engine
+        var createScene = function(){
+            var scene = new BABYLON.Scene(engine); // the scene
+            
+            var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene); // the light of the scene
+
+            var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 4, 20, new BABYLON.Vector3.Zero(), scene); // viewing camera
+            camera.attachControl(canvas, true); // attach camera to canvas
+
+            var brick = new BABYLON.StandardMaterial("brick", scene); // brick material
+	        brick.diffuseTexture = new BABYLON.Texture("brick.jpg", scene); // importing image for material
+
+            var carpetgray = new BABYLON.StandardMaterial("carpet_gray", scene); // carpet material
+            carpetgray.diffuseTexture = new BABYLON.Texture("carpetgray.jpg", scene);
+
+            var pat = BABYLON.Mesh.NO_FLIP;
+
+            var options1 = {
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE,
+                pattern: pat,
+                height: 4,
+                width: 20,
+                tileSize: 2
+            }
+
+            var options2 = {
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE,
+                pattern: pat,
+                height: 4,
+                width: 10,
+                tileSize: 2
+            }
+
+            var ground = new BABYLON.MeshBuilder.CreateGround("ground", {height: 10, width: 20}, scene); // create the ground
+            ground.material = carpetgray;
+            
+            var wall1 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_north", options1, scene); // create the wall for the ground to make room
+            wall1.position = new BABYLON.Vector3(0, 2, 5);
+            wall1.material = brick;
+            
+            var wall2 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_east", options2, scene); // wall for room
+            wall2.position = new BABYLON.Vector3(10, 2, 0);
+            wall2.rotation.y += Math.PI / 2;
+            wall2.material = brick;
+            
+            var wall3 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_south", options1, scene); // wall for room
+            wall3.position = new BABYLON.Vector3(0, 2, -5);
+            wall3.material = brick;
+
+            var wall4 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_west", options2, scene) // wall for room
+            wall4.position = new BABYLON.Vector3(-10, 2, 0);
+            wall4.rotation.y -= Math.PI / 2;
+            wall4.material = brick;
+
+            var ui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene); // create the base ui
+
+            var button1 = BABYLON.GUI.Button.CreateSimpleButton("button", "Change width"); // create button
+            button1.width = "125px";
+            button1.height = "40px";
+            button1.color = "#0000ff";
+            button1.background = "#ffffff";
+            button1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            button1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_LEFT;
+            button1.left = "20px";
+            button1.top = "20px";
+            button1.onPointerUpObservable.add(function(){ // when pressed, the wall of the west doubled in width
+                wall4.scaling.x += 2;
+            });
+
+            ui.addControl(button1);
+
+            return scene;
+        }
+
+        var scene = createScene(); // scene displaying goes here...
+
+        engine.runRenderLoop(function(){ // renders the scene via loop
+            scene.render();
+        });
+
+        window.addEventListener("resize", function(){
+            engine.resize();
+        });
+    </script>
+</body>
+</html>
