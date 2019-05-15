@@ -39,13 +39,34 @@
             var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 4, 20, new BABYLON.Vector3.Zero(), scene); // viewing camera
             camera.attachControl(canvas, true); // attach camera to canvas
 
+            // materials for the mesh
+
             var brick = new BABYLON.StandardMaterial("brick", scene); // brick material
 	        brick.diffuseTexture = new BABYLON.Texture("brick.jpg", scene); // importing image for material
+
+            var brick2 = new BABYLON.StandardMaterial("brick2", scene); // brick2 material
+            brick2.diffuseTexture = new BABYLON.Texture("brick2.jpg", scene);
 
             var carpetgray = new BABYLON.StandardMaterial("carpet_gray", scene); // carpet material
             carpetgray.diffuseTexture = new BABYLON.Texture("carpetgray.jpg", scene);
 
+            var woodfloor = new BABYLON.StandardMaterial("wood_floor", scene); // wood floor material
+            woodfloor.diffuseTexture = new BABYLON.Texture("woodfloor.jpg", scene);
+
+            
+
             var pat = BABYLON.Mesh.NO_FLIP;
+
+            // options for the mesh builder
+
+            var groundoption = {
+                xmin: -10,
+                zmin: -5,
+                xmax: 10,
+                zmax: 5,
+                subdivisions: {h: 5, w: 10},
+                precision: {h: 2, w: 2}
+            }
 
             var options1 = {
                 sideOrientation: BABYLON.Mesh.DOUBLESIDE,
@@ -63,7 +84,7 @@
                 tileSize: 2
             }
 
-            var ground = new BABYLON.MeshBuilder.CreateGround("ground", {height: 10, width: 20}, scene); // create the ground
+            var ground = new BABYLON.MeshBuilder.CreateTiledGround("ground", groundoption, scene); // create the ground
             ground.material = carpetgray;
             
             var wall1 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_north", options1, scene); // create the wall for the ground to make room
@@ -84,22 +105,41 @@
             wall4.rotation.y -= Math.PI / 2;
             wall4.material = brick;
 
+            // GUI
+             
             var ui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene); // create the base ui
 
-            var button1 = BABYLON.GUI.Button.CreateSimpleButton("button", "Change width"); // create button
-            button1.width = "125px";
+            var button1 = BABYLON.GUI.Button.CreateSimpleButton("button", "Change material of wall"); // create button
+            button1.width = "225px";
             button1.height = "40px";
-            button1.color = "#0000ff";
+            button1.color = "ffffff";
             button1.background = "#ffffff";
             button1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
             button1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_LEFT;
             button1.left = "20px";
             button1.top = "20px";
-            button1.onPointerUpObservable.add(function(){ // when pressed, the wall of the west doubled in width
-                wall4.scaling.x += 2;
+            button1.onPointerUpObservable.add(function(){
+                wall1.material = brick2;
+                wall2.material = brick2;
+                wall3.material = brick2;
+                wall4.material = brick2;
+            });
+
+            var button2 = BABYLON.GUI.Button.CreateSimpleButton("button", "Change material of floor"); // create button
+            button2.width = "225px";
+            button2.height = "40px";
+            button2.color = "ffffff";
+            button2.background = "#ffffff";
+            button2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            button2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_LEFT;
+            button2.left = "20px";
+            button2.top = "100px";
+            button2.onPointerUpObservable.add(function(){ 
+                ground.material = woodfloor;
             });
 
             ui.addControl(button1);
+            ui.addControl(button2);
 
             return scene;
         }
