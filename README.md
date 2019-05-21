@@ -1,4 +1,7 @@
 To do:
 
-- Add tiled ground
-- Add buttons to change the material of the wall and the ground
+- Make sure that importing obj works
+- Add functionalities to the obj
+- Add more material options
+- Use universal camera for first person interaction
+- Load 3 different room sizes
