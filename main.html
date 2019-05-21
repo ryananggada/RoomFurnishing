@@ -4,7 +4,7 @@
     <title>CG Final Project</title>
     <script src="https://preview.babylonjs.com/babylon.js"></script> <!-- import babylonjs -->
     <script src="https://preview.babylonjs.com/gui/babylon.gui.js"></script> <!-- GUI for babylonjs -->
-    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script> <!-- scene loaders -->
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script> <!-- scene loaders -->
     <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script> <!-- scene interactions -->
     
     <style>
@@ -33,27 +33,33 @@
         var engine = new BABYLON.Engine(canvas, true); // initialise the engine
         var createScene = function(){
             var scene = new BABYLON.Scene(engine); // the scene
-            
+            scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
+
+            scene.collisionsEnabled = true;
+
             var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene); // the light of the scene
 
-            var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 4, 20, new BABYLON.Vector3.Zero(), scene); // viewing camera
+            // var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 4, 20, new BABYLON.Vector3(0, 0, 0), scene); // viewing camera
+            var camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 2, 0), scene); // first person camera
             camera.attachControl(canvas, true); // attach camera to canvas
+            camera.checkCollisions = true;
+            camera.applyGravity = true;
+
+            camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
 
             // materials for the mesh
 
-            var brick = new BABYLON.StandardMaterial("brick", scene); // brick material
-	        brick.diffuseTexture = new BABYLON.Texture("brick.jpg", scene); // importing image for material
+            var wallmat1 = new BABYLON.StandardMaterial("wallmat1", scene); // brick material
+	        wallmat1.diffuseTexture = new BABYLON.Texture("wallmat1.jpg", scene); // importing image for material
 
-            var brick2 = new BABYLON.StandardMaterial("brick2", scene); // brick2 material
-            brick2.diffuseTexture = new BABYLON.Texture("brick2.jpg", scene);
+            var wallmat2 = new BABYLON.StandardMaterial("wallmat2", scene); // brick2 material
+            wallmat2.diffuseTexture = new BABYLON.Texture("wallmat2.jpg", scene);
 
-            var carpetgray = new BABYLON.StandardMaterial("carpet_gray", scene); // carpet material
-            carpetgray.diffuseTexture = new BABYLON.Texture("carpetgray.jpg", scene);
+            var floormat1 = new BABYLON.StandardMaterial("floormat1", scene); // carpet material
+            floormat1.diffuseTexture = new BABYLON.Texture("floormat1.jpg", scene);
 
-            var woodfloor = new BABYLON.StandardMaterial("wood_floor", scene); // wood floor material
-            woodfloor.diffuseTexture = new BABYLON.Texture("woodfloor.jpg", scene);
-
-            
+            var floormat2 = new BABYLON.StandardMaterial("floormat2", scene); // wood floor material
+            floormat2.diffuseTexture = new BABYLON.Texture("floormat2.jpg", scene);
 
             var pat = BABYLON.Mesh.NO_FLIP;
 
@@ -85,61 +91,100 @@
             }
 
             var ground = new BABYLON.MeshBuilder.CreateTiledGround("ground", groundoption, scene); // create the ground
-            ground.material = carpetgray;
+            ground.material = floormat1;
             
             var wall1 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_north", options1, scene); // create the wall for the ground to make room
             wall1.position = new BABYLON.Vector3(0, 2, 5);
-            wall1.material = brick;
+            wall1.material = wallmat1;
             
             var wall2 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_east", options2, scene); // wall for room
             wall2.position = new BABYLON.Vector3(10, 2, 0);
             wall2.rotation.y += Math.PI / 2;
-            wall2.material = brick;
+            wall2.material = wallmat1;
             
             var wall3 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_south", options1, scene); // wall for room
             wall3.position = new BABYLON.Vector3(0, 2, -5);
-            wall3.material = brick;
+            wall3.material = wallmat1;
 
             var wall4 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_west", options2, scene) // wall for room
             wall4.position = new BABYLON.Vector3(-10, 2, 0);
             wall4.rotation.y -= Math.PI / 2;
-            wall4.material = brick;
+            wall4.material = wallmat1;
+
+            ground.checkCollisions = true;
+            wall1.checkCollisions = true;
+            wall2.checkCollisions = true;
+            wall3.checkCollisions = true;
+            wall4.checkCollisions = true;
+
+            var chair = new BABYLON.SceneLoader.Load("/cgs/graphicsfinal/", "chair.obj", engine, function(newScene){});
 
             // GUI
              
             var ui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene); // create the base ui
 
-            var button1 = BABYLON.GUI.Button.CreateSimpleButton("button", "Change material of wall"); // create button
-            button1.width = "225px";
-            button1.height = "40px";
-            button1.color = "ffffff";
-            button1.background = "#ffffff";
-            button1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-            button1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_LEFT;
-            button1.left = "20px";
-            button1.top = "20px";
-            button1.onPointerUpObservable.add(function(){
-                wall1.material = brick2;
-                wall2.material = brick2;
-                wall3.material = brick2;
-                wall4.material = brick2;
+            var wallbut1 = BABYLON.GUI.Button.CreateImageOnlyButton("wall_button", "wallmat1.jpg"); // create button
+            wallbut1.width = "70px";
+            wallbut1.height = "70px";
+            wallbut1.color = "#000000";
+            wallbut1.background = "#ffffff";
+            wallbut1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            wallbut1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            wallbut1.left = "10px";
+            wallbut1.top = "-120px";
+            wallbut1.onPointerUpObservable.add(function(){
+                wall1.material = wallmat1;
+                wall2.material = wallmat1;
+                wall3.material = wallmat1;
+                wall4.material = wallmat1;
             });
 
-            var button2 = BABYLON.GUI.Button.CreateSimpleButton("button", "Change material of floor"); // create button
-            button2.width = "225px";
-            button2.height = "40px";
-            button2.color = "ffffff";
-            button2.background = "#ffffff";
-            button2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-            button2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_LEFT;
-            button2.left = "20px";
-            button2.top = "100px";
-            button2.onPointerUpObservable.add(function(){ 
-                ground.material = woodfloor;
+            var wallbut2 = BABYLON.GUI.Button.CreateImageOnlyButton("wall_button2", "wallmat2.jpg");
+            wallbut2.width = "70px";
+            wallbut2.height = "70px";
+            wallbut2.color = "#000000";
+            wallbut2.background = "#ffffff";
+            wallbut2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            wallbut2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            wallbut2.left = "90px";
+            wallbut2.top = "-120px";
+            wallbut2.onPointerUpObservable.add(function(){
+                wall1.material = wallmat2;
+                wall2.material = wallmat2;
+                wall3.material = wallmat2;
+                wall4.material = wallmat2;
             });
 
-            ui.addControl(button1);
-            ui.addControl(button2);
+            var floorbut1 = BABYLON.GUI.Button.CreateImageOnlyButton("floor_button", "floormat1.jpg");
+            floorbut1.width = "70px";
+            floorbut1.height = "70px";
+            floorbut1.color = "#000000";
+            floorbut1.background = "#ffffff";
+            floorbut1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            floorbut1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            floorbut1.left = "10px";
+            floorbut1.top = "-20px";
+            floorbut1.onPointerUpObservable.add(function(){ 
+                ground.material = floormat1;
+            });
+
+            var floorbut2 = BABYLON.GUI.Button.CreateImageOnlyButton("floor_button2", "floormat2.jpg");
+            floorbut2.width = "70px";
+            floorbut2.height = "70px";
+            floorbut2.color = "#000000";
+            floorbut2.background = "#ffffff";
+            floorbut2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            floorbut2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            floorbut2.left = "90px";
+            floorbut2.top = "-20px";
+            floorbut2.onPointerUpObservable.add(function(){ 
+                ground.material = floormat2;
+            });
+
+            ui.addControl(wallbut1);
+            ui.addControl(wallbut2);
+            ui.addControl(floorbut1);
+            ui.addControl(floorbut2);
 
             return scene;
         }
