@@ -1,6 +1,5 @@
 To do:
 
-- Make sure that importing obj works
 - Add functionalities to the obj
 - Add more material options
 - Load 3 different room sizes
