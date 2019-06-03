@@ -27,7 +27,7 @@
 </head>
 
 <body>
-    <canvas id="render" touch-action="none"> <!-- canvas creation -->
+    <canvas id="render" touch-action="none"></canvas> <!-- canvas creation -->
     <script>
         var canvas = document.getElementById("render"); // initialise the canvas
         var engine = new BABYLON.Engine(canvas, true); // initialise the engine
@@ -39,13 +39,14 @@
 
             var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene); // the light of the scene
 
-            // var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 4, 20, new BABYLON.Vector3(0, 0, 0), scene); // viewing camera
-            var camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 2, 0), scene); // first person camera
+            var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 4, 20, new BABYLON.Vector3(0, 0, 0), scene); // viewing camera
+            // var camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 2, 0), scene); // first person camera
             camera.attachControl(canvas, true); // attach camera to canvas
-            camera.checkCollisions = true;
-            camera.applyGravity = true;
+            // camera.checkCollisions = true;
+            // camera.applyGravity = true;
 
-            camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
+            // camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
+            scene.activeCameras.push(camera);
 
             // materials for the mesh
 
@@ -117,7 +118,7 @@
             wall3.checkCollisions = true;
             wall4.checkCollisions = true;
 
-            var chair = new BABYLON.SceneLoader.Load("/cgs/graphicsfinal/", "chair.obj", engine, function(newScene){});
+            var chair = new BABYLON.SceneLoader.Load("chair/", "chair.obj", engine, function(newScene){});
 
             // GUI
              
@@ -186,6 +187,64 @@
             ui.addControl(floorbut1);
             ui.addControl(floorbut2);
 
+
+            // edit item 
+            var gizmoManager = new BABYLON.GizmoManager(scene);
+            gizmoManager.attachableMeshes = [];
+
+            var map = {}; //object for multiple key presses
+            scene.actionManager = new BABYLON.ActionManager(scene);
+
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
+                map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+
+            }));
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
+                map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            }));
+            scene.registerAfterRender(function () {
+                if ((map["z"] || map["Z"])) {
+                    gizmoManager.positionGizmoEnabled = true;
+                    gizmoManager.rotationGizmoEnabled = false;
+                    gizmoManager.scaleGizmoEnabled = false;
+                    gizmoManager.boundingBoxGizmoEnabled = false;
+                };
+                if ((map["x"] || map["X"])) {
+                    gizmoManager.positionGizmoEnabled = false;
+                    gizmoManager.rotationGizmoEnabled = true;
+                    gizmoManager.scaleGizmoEnabled = false;
+                    gizmoManager.boundingBoxGizmoEnabled = false;
+                };
+                if ((map["c"] || map["C"])) {
+                    gizmoManager.positionGizmoEnabled = false;
+                    gizmoManager.rotationGizmoEnabled = false;
+                    gizmoManager.scaleGizmoEnabled = true;
+                    gizmoManager.boundingBoxGizmoEnabled = true;
+                };
+                if ((map["Delete"])){
+
+                }
+
+            });
+
+            // insert items
+            // chair
+            BABYLON.SceneLoader.ImportMesh(null,"chair/","chair.obj", scene, function(meshes){
+            	for (var i = 1; i < meshes.length; i++) {
+					meshes[0].addChild(meshes[i]);
+            	}
+            	gizmoManager.attachableMeshes.push(meshes[0]);
+            });
+
+            // table
+            BABYLON.SceneLoader.ImportMesh(null,"table/","table.obj", scene, function(meshes){
+				for (var i = 1; i < meshes.length; i++) {
+					meshes[0].addChild(meshes[i]);
+            	}
+            	gizmoManager.attachableMeshes.push(meshes[0]);
+            });
+
+            // gizmoManager.attachableMeshes = null;
             return scene;
         }
 
