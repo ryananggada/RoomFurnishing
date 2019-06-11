@@ -27,7 +27,7 @@
 </head>
 
 <body>
-    <canvas id="render" touch-action="none"></canvas> <!-- canvas creation -->
+    <canvas id="render" touch-action="none"> <!-- canvas creation -->
     <script>
         var canvas = document.getElementById("render"); // initialise the canvas
         var engine = new BABYLON.Engine(canvas, true); // initialise the engine
@@ -42,25 +42,65 @@
             var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 4, 20, new BABYLON.Vector3(0, 0, 0), scene); // viewing camera
             // var camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 2, 0), scene); // first person camera
             camera.attachControl(canvas, true); // attach camera to canvas
-            // camera.checkCollisions = true;
+            camera.checkCollisions = true;
             // camera.applyGravity = true;
 
             // camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
-            scene.activeCameras.push(camera);
+
+            // initialize GizmoManger
+            var gizmoManager = new BABYLON.GizmoManager(scene);
+            gizmoManager.attachableMeshes = [];
+
+            // initialize all gizmos
+            gizmoManager.boundingBoxGizmoEnabled = true;
+            gizmoManager.positionGizmoEnabled = true;
+            gizmoManager.rotationGizmoEnabled = true;
+            gizmoManager.scaleGizmoEnabled = true;
+
+            // modify gizmos on key presses
+            document.onkeydown = (e)=>{
+                if (e.key == 'q' || e.key == 'w' || e.key == 'e' || e.key == 'r'){
+                    gizmoManager.boundingBoxGizmoEnabled = false;
+                    gizmoManager.positionGizmoEnabled = false;
+                    gizmoManager.rotationGizmoEnabled = false;
+                    gizmoManager.scaleGizmoEnabled = false;
+                    
+                    if(e.key == 'q'){
+                        gizmoManager.boundingBoxGizmoEnabled = true;
+                    }
+                    if(e.key == 'w'){
+                        gizmoManager.positionGizmoEnabled = true;
+                    }
+                    if(e.key == 'e'){
+                        gizmoManager.rotationGizmoEnabled = true;
+                    }
+                    if(e.key == 'r'){
+                        gizmoManager.scaleGizmoEnabled = true;
+                    }
+                }
+
+                if(e.key == 't'){
+                    // hide the gizmo
+                    gizmoManager.attachToMesh(null);
+                }
+            }
+
+            // start GizmoManager in positionGizmo
+            document.onkeydown({key: "w"});
 
             // materials for the mesh
 
             var wallmat1 = new BABYLON.StandardMaterial("wallmat1", scene); // brick material
-	        wallmat1.diffuseTexture = new BABYLON.Texture("wallmat1.jpg", scene); // importing image for material
+	        wallmat1.diffuseTexture = new BABYLON.Texture("./materials/wallmat1.jpg", scene); // importing image for material
 
             var wallmat2 = new BABYLON.StandardMaterial("wallmat2", scene); // brick2 material
-            wallmat2.diffuseTexture = new BABYLON.Texture("wallmat2.jpg", scene);
+            wallmat2.diffuseTexture = new BABYLON.Texture("./materials/wallmat2.jpg", scene);
 
             var floormat1 = new BABYLON.StandardMaterial("floormat1", scene); // carpet material
-            floormat1.diffuseTexture = new BABYLON.Texture("floormat1.jpg", scene);
+            floormat1.diffuseTexture = new BABYLON.Texture("./materials/floormat1.jpg", scene);
 
             var floormat2 = new BABYLON.StandardMaterial("floormat2", scene); // wood floor material
-            floormat2.diffuseTexture = new BABYLON.Texture("floormat2.jpg", scene);
+            floormat2.diffuseTexture = new BABYLON.Texture("./materials/floormat2.jpg", scene);
 
             var pat = BABYLON.Mesh.NO_FLIP;
 
@@ -100,7 +140,7 @@
             
             var wall2 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_east", options2, scene); // wall for room
             wall2.position = new BABYLON.Vector3(10, 2, 0);
-            wall2.rotation.y += Math.PI / 2;
+            wall2.rotation.y = Math.PI / 2;
             wall2.material = wallmat1;
             
             var wall3 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_south", options1, scene); // wall for room
@@ -109,7 +149,7 @@
 
             var wall4 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_west", options2, scene) // wall for room
             wall4.position = new BABYLON.Vector3(-10, 2, 0);
-            wall4.rotation.y -= Math.PI / 2;
+            wall4.rotation.y = Math.PI / 2;
             wall4.material = wallmat1;
 
             ground.checkCollisions = true;
@@ -118,13 +158,25 @@
             wall3.checkCollisions = true;
             wall4.checkCollisions = true;
 
-            var chair = new BABYLON.SceneLoader.Load("chair/", "chair.obj", engine, function(newScene){});
+            BABYLON.SceneLoader.ImportMesh(null, "./chair/", "chair.babylon", scene, function(meshes){
+                var chair = meshes[0];
+                chair.position = new BABYLON.Vector3(3, 0.5, 0);
+                chair.rotation.y = Math.PI;
+                gizmoManager.attachableMeshes.push(meshes[0]);
+            });
+
+            BABYLON.SceneLoader.ImportMesh(null, "./wooden-coffe-table/", "wooden-coffe-table.babylon", scene, function(meshes){
+                var table = meshes[0];
+                table.position = new BABYLON.Vector3(4, 0, 0);
+                table.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
+                gizmoManager.attachableMeshes.push(meshes[0]);
+            });
 
             // GUI
              
-            var ui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene); // create the base ui
+            var ui = new BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene); // create the base ui
 
-            var wallbut1 = BABYLON.GUI.Button.CreateImageOnlyButton("wall_button", "wallmat1.jpg"); // create button
+            var wallbut1 = new BABYLON.GUI.Button.CreateImageOnlyButton("wall_button", "./materials/wallmat1.jpg"); // create button
             wallbut1.width = "70px";
             wallbut1.height = "70px";
             wallbut1.color = "#000000";
@@ -140,7 +192,7 @@
                 wall4.material = wallmat1;
             });
 
-            var wallbut2 = BABYLON.GUI.Button.CreateImageOnlyButton("wall_button2", "wallmat2.jpg");
+            var wallbut2 = new BABYLON.GUI.Button.CreateImageOnlyButton("wall_button2", "./materials/wallmat2.jpg");
             wallbut2.width = "70px";
             wallbut2.height = "70px";
             wallbut2.color = "#000000";
@@ -156,7 +208,7 @@
                 wall4.material = wallmat2;
             });
 
-            var floorbut1 = BABYLON.GUI.Button.CreateImageOnlyButton("floor_button", "floormat1.jpg");
+            var floorbut1 = new BABYLON.GUI.Button.CreateImageOnlyButton("floor_button", "./materials/floormat1.jpg");
             floorbut1.width = "70px";
             floorbut1.height = "70px";
             floorbut1.color = "#000000";
@@ -169,7 +221,7 @@
                 ground.material = floormat1;
             });
 
-            var floorbut2 = BABYLON.GUI.Button.CreateImageOnlyButton("floor_button2", "floormat2.jpg");
+            var floorbut2 = new BABYLON.GUI.Button.CreateImageOnlyButton("floor_button2", "./materials/floormat2.jpg");
             floorbut2.width = "70px";
             floorbut2.height = "70px";
             floorbut2.color = "#000000";
@@ -187,64 +239,6 @@
             ui.addControl(floorbut1);
             ui.addControl(floorbut2);
 
-
-            // edit item 
-            var gizmoManager = new BABYLON.GizmoManager(scene);
-            gizmoManager.attachableMeshes = [];
-
-            var map = {}; //object for multiple key presses
-            scene.actionManager = new BABYLON.ActionManager(scene);
-
-            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
-                map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
-
-            }));
-            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
-                map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
-            }));
-            scene.registerAfterRender(function () {
-                if ((map["z"] || map["Z"])) {
-                    gizmoManager.positionGizmoEnabled = true;
-                    gizmoManager.rotationGizmoEnabled = false;
-                    gizmoManager.scaleGizmoEnabled = false;
-                    gizmoManager.boundingBoxGizmoEnabled = false;
-                };
-                if ((map["x"] || map["X"])) {
-                    gizmoManager.positionGizmoEnabled = false;
-                    gizmoManager.rotationGizmoEnabled = true;
-                    gizmoManager.scaleGizmoEnabled = false;
-                    gizmoManager.boundingBoxGizmoEnabled = false;
-                };
-                if ((map["c"] || map["C"])) {
-                    gizmoManager.positionGizmoEnabled = false;
-                    gizmoManager.rotationGizmoEnabled = false;
-                    gizmoManager.scaleGizmoEnabled = true;
-                    gizmoManager.boundingBoxGizmoEnabled = true;
-                };
-                if ((map["Delete"])){
-
-                }
-
-            });
-
-            // insert items
-            // chair
-            BABYLON.SceneLoader.ImportMesh(null,"chair/","chair.obj", scene, function(meshes){
-            	for (var i = 1; i < meshes.length; i++) {
-					meshes[0].addChild(meshes[i]);
-            	}
-            	gizmoManager.attachableMeshes.push(meshes[0]);
-            });
-
-            // table
-            BABYLON.SceneLoader.ImportMesh(null,"table/","table.obj", scene, function(meshes){
-				for (var i = 1; i < meshes.length; i++) {
-					meshes[0].addChild(meshes[i]);
-            	}
-            	gizmoManager.attachableMeshes.push(meshes[0]);
-            });
-
-            // gizmoManager.attachableMeshes = null;
             return scene;
         }
 
