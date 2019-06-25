@@ -43,50 +43,75 @@
             // var camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 2, 0), scene); // first person camera
             camera.attachControl(canvas, true); // attach camera to canvas
             camera.checkCollisions = true;
-            // camera.applyGravity = true;
+            camera.applyGravity = true;
 
             // camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
 
-            // initialize GizmoManger
             var gizmoManager = new BABYLON.GizmoManager(scene);
+            gizmoManager.boundingBoxGizmoEnabled = true;
             gizmoManager.attachableMeshes = [];
 
-            // initialize all gizmos
-            gizmoManager.boundingBoxGizmoEnabled = true;
-            gizmoManager.positionGizmoEnabled = true;
-            gizmoManager.rotationGizmoEnabled = true;
-            gizmoManager.scaleGizmoEnabled = true;
+            var map = {}; //object for multiple key presses
+            scene.actionManager = new BABYLON.ActionManager(scene);
 
-            // modify gizmos on key presses
-            document.onkeydown = (e)=>{
-                if (e.key == 'q' || e.key == 'w' || e.key == 'e' || e.key == 'r'){
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
+                map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+
+            }));
+            
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
+                map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            }));
+
+            var delete_item = false;
+            
+            scene.registerBeforeRender(function () {
+                if ((map["z"] || map["Z"])) {
+                    gizmoManager.positionGizmoEnabled = true;
+                    gizmoManager.rotationGizmoEnabled = false;
+                    gizmoManager.scaleGizmoEnabled = false;
                     gizmoManager.boundingBoxGizmoEnabled = false;
+                };
+                if ((map["x"] || map["X"])) {
+                    gizmoManager.positionGizmoEnabled = false;
+                    gizmoManager.rotationGizmoEnabled = true;
+                    gizmoManager.scaleGizmoEnabled = false;
+                    gizmoManager.boundingBoxGizmoEnabled = false;
+                };
+                if ((map["c"] || map["C"])) {
+                    gizmoManager.positionGizmoEnabled = false;
+                    gizmoManager.rotationGizmoEnabled = false;
+                    gizmoManager.scaleGizmoEnabled = true;
+                    gizmoManager.boundingBoxGizmoEnabled = true;
+                };
+                if (map["b"]){
+                    gizmoManager.attachToMesh(null);
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = false;
                     gizmoManager.scaleGizmoEnabled = false;
-                    
-                    if(e.key == 'q'){
-                        gizmoManager.boundingBoxGizmoEnabled = true;
-                    }
-                    if(e.key == 'w'){
-                        gizmoManager.positionGizmoEnabled = true;
-                    }
-                    if(e.key == 'e'){
-                        gizmoManager.rotationGizmoEnabled = true;
-                    }
-                    if(e.key == 'r'){
-                        gizmoManager.scaleGizmoEnabled = true;
-                    }
-                }
+                    gizmoManager.boundingBoxGizmoEnabled = false;
+                    delete_item = false;
+                };
 
-                if(e.key == 't'){
-                    // hide the gizmo
+                if (map["n"]) {
                     gizmoManager.attachToMesh(null);
-                }
-            }
+                    gizmoManager.positionGizmoEnabled = false;
+                    gizmoManager.rotationGizmoEnabled = false;
+                    gizmoManager.scaleGizmoEnabled = false;
+                    gizmoManager.boundingBoxGizmoEnabled = false;
+                    delete_item = true;
+                    console.log(delete_item);
+                };
 
-            // start GizmoManager in positionGizmo
-            document.onkeydown({key: "w"});
+                
+            });
+
+            scene.onPointerDown = function(evt, pickResult) {
+                if (pickResult.pickedMesh && delete_item == true) {
+                    pickResult.pickedMesh.dispose();
+                };
+            };
+		
 
             // materials for the mesh
 
@@ -102,8 +127,6 @@
             var floormat2 = new BABYLON.StandardMaterial("floormat2", scene); // wood floor material
             floormat2.diffuseTexture = new BABYLON.Texture("./materials/floormat2.jpg", scene);
 
-            var pat = BABYLON.Mesh.NO_FLIP;
-
             // options for the mesh builder
 
             var groundoption = {
@@ -117,7 +140,7 @@
 
             var options1 = {
                 sideOrientation: BABYLON.Mesh.DOUBLESIDE,
-                pattern: pat,
+                pattern: BABYLON.Mesh.NO_FLIP,
                 height: 4,
                 width: 20,
                 tileSize: 2
@@ -125,7 +148,7 @@
 
             var options2 = {
                 sideOrientation: BABYLON.Mesh.DOUBLESIDE,
-                pattern: pat,
+                pattern: BABYLON.Mesh.NO_FLIP,
                 height: 4,
                 width: 10,
                 tileSize: 2
@@ -158,18 +181,16 @@
             wall3.checkCollisions = true;
             wall4.checkCollisions = true;
 
-            BABYLON.SceneLoader.ImportMesh(null, "./chair/", "chair.babylon", scene, function(meshes){
-                var chair = meshes[0];
-                chair.position = new BABYLON.Vector3(3, 0.5, 0);
+            /* BABYLON.SceneLoader.ImportMesh("", "./chair/", "chair.obj", scene, function(newMeshes){
+                var chair = newMeshes[0];
+                chair.position = new BABYLON.Vector3(5, 0.5, 0);
                 chair.rotation.y = Math.PI;
-                gizmoManager.attachableMeshes.push(meshes[0]);
-            });
+            }); */
 
-            BABYLON.SceneLoader.ImportMesh(null, "./wooden-coffe-table/", "wooden-coffe-table.babylon", scene, function(meshes){
-                var table = meshes[0];
+            BABYLON.SceneLoader.ImportMesh("", "./wooden-coffe-table/", "wooden-coffe-table.babylon", scene, function(newMeshes){
+                table = newMeshes[0];
                 table.position = new BABYLON.Vector3(4, 0, 0);
-                table.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
-                gizmoManager.attachableMeshes.push(meshes[0]);
+                // table.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
             });
 
             // GUI
@@ -234,10 +255,52 @@
                 ground.material = floormat2;
             });
 
+            var chairadd = new BABYLON.GUI.Button.CreateSimpleButton("chair_add", "Add chair");
+            chairadd.width = "70px";
+            chairadd.height = "70px";
+            chairadd.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            chairadd.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            chairadd.left = "-90px";
+            chairadd.top = "-120px";
+            chairadd.onPointerUpObservable.add(function(){
+                BABYLON.SceneLoader.ImportMesh(null, "./chair/", "chair.obj", scene, function(meshes) {
+                    var chair = meshes[0];
+
+                    for (var i = 1; i < meshes.length; i++) {
+                        chair = BABYLON.Mesh.MergeMeshes([chair, meshes[i]], true, true, undefined, false, true);
+                    }
+
+                    chair.isPickable = true;
+                    gizmoManager.attachableMeshes.push(chair);
+                });
+            });
+
+            var tableadd = new BABYLON.GUI.Button.CreateSimpleButton("table_add", "Add table");
+            tableadd.width = "70px";
+            tableadd.height = "70px";
+            tableadd.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            tableadd.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            tableadd.left = "-10px";
+            tableadd.top = "-120px";
+            tableadd.onPointerUpObservable.add(function(){
+                BABYLON.SceneLoader.ImportMesh(null, "./table/", "table.obj", scene, function(meshes) {
+                    var table = meshes[0];
+
+                    for (var i = 1; i < meshes.length; i++) {
+                        table = BABYLON.Mesh.MergeMeshes([table, meshes[i]], true, true, undefined, false, true);
+                    }
+
+                    table.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
+                    gizmoManager.attachableMeshes.push(table);
+                });
+            });
+
             ui.addControl(wallbut1);
             ui.addControl(wallbut2);
             ui.addControl(floorbut1);
             ui.addControl(floorbut2);
+            ui.addControl(chairadd);
+            ui.addControl(tableadd);
 
             return scene;
         }
