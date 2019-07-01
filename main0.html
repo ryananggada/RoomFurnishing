@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CG Final Project</title>
+    <script src="https://preview.babylonjs.com/babylon.js"></script> <!-- import babylonjs -->
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.js"></script> <!-- GUI for babylonjs -->
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script> <!-- scene loaders -->
+    <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script> <!-- scene interactions -->
+    
+    <style>
+        html, body
+        {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #render
+        {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="render" touch-action="none"> <!-- canvas creation -->
+    <script>
+        var canvas = document.getElementById("render"); // initialise the canvas
+        var engine = new BABYLON.Engine(canvas, true); // initialise the engine
+        var createScene = function(){
+            var scene = new BABYLON.Scene(engine); // the scene
+            scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
+
+            scene.collisionsEnabled = true;
+
+            var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene); // the light of the scene
+
+            var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 4, 20, new BABYLON.Vector3(0, 0, 0), scene); // viewing camera
+            // var camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 2, 0), scene); // first person camera
+            camera.attachControl(canvas, true); // attach camera to canvas
+            camera.checkCollisions = true;
+            camera.applyGravity = true;
+
+            // camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
+
+            var gizmoManager = new BABYLON.GizmoManager(scene);
+            gizmoManager.boundingBoxGizmoEnabled = true;
+            gizmoManager.attachableMeshes = [];
+
+            // create undeletable objects for walls and floors
+            var undeletable_meshes = [];
+
+            var map = {}; //object for multiple key presses
+            scene.actionManager = new BABYLON.ActionManager(scene);
+
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
+                map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+
+            }));
+            
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
+                map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            }));
+
+            var delete_item = false;
+            
+            scene.registerBeforeRender(function () {
+                if ((map["z"] || map["Z"])) {
+                    gizmoManager.positionGizmoEnabled = true;
+                    gizmoManager.rotationGizmoEnabled = false;
+                    gizmoManager.scaleGizmoEnabled = false;
+                    gizmoManager.boundingBoxGizmoEnabled = false;
+                };
+                if ((map["x"] || map["X"])) {
+                    gizmoManager.positionGizmoEnabled = false;
+                    gizmoManager.rotationGizmoEnabled = true;
+                    gizmoManager.scaleGizmoEnabled = false;
+                    gizmoManager.boundingBoxGizmoEnabled = false;
+                };
+                if ((map["c"] || map["C"])) {
+                    gizmoManager.positionGizmoEnabled = false;
+                    gizmoManager.rotationGizmoEnabled = false;
+                    gizmoManager.scaleGizmoEnabled = true;
+                    gizmoManager.boundingBoxGizmoEnabled = true;
+                };
+                if (map["b"]){
+                    gizmoManager.attachToMesh(null);
+                    gizmoManager.positionGizmoEnabled = false;
+                    gizmoManager.rotationGizmoEnabled = false;
+                    gizmoManager.scaleGizmoEnabled = false;
+                    gizmoManager.boundingBoxGizmoEnabled = false;
+                    delete_item = false;
+                };
+
+                if (map["n"]) {
+                    gizmoManager.attachToMesh(null);
+                    gizmoManager.positionGizmoEnabled = false;
+                    gizmoManager.rotationGizmoEnabled = false;
+                    gizmoManager.scaleGizmoEnabled = false;
+                    gizmoManager.boundingBoxGizmoEnabled = false;
+                    delete_item = true;
+                    console.log(delete_item);
+                };
+
+                
+            });
+
+            scene.onPointerDown = function(evt, pickResult) {
+                if (pickResult.pickedMesh && delete_item == true) {
+                    if(!undeletable_meshes.includes(pickResult.pickedMesh)){
+                        pickResult.pickedMesh.dispose();
+                    }
+                };
+            };
+		
+
+            // materials for the mesh
+
+            var wallmat1 = new BABYLON.StandardMaterial("wallmat1", scene); // brick material
+	        wallmat1.diffuseTexture = new BABYLON.Texture("./materials/wallmat1.jpg", scene); // importing image for material
+
+            var wallmat2 = new BABYLON.StandardMaterial("wallmat2", scene); // brick2 material
+            wallmat2.diffuseTexture = new BABYLON.Texture("./materials/wallmat2.jpg", scene);
+
+            var floormat1 = new BABYLON.StandardMaterial("floormat1", scene); // carpet material
+            floormat1.diffuseTexture = new BABYLON.Texture("./materials/floormat1.jpg", scene);
+
+            var floormat2 = new BABYLON.StandardMaterial("floormat2", scene); // wood floor material
+            floormat2.diffuseTexture = new BABYLON.Texture("./materials/floormat2.jpg", scene);
+
+            // options for the mesh builder
+
+            var groundoption = {
+                xmin: -10,
+                zmin: -5,
+                xmax: 10,
+                zmax: 5,
+                subdivisions: {h: 5, w: 10},
+                precision: {h: 2, w: 2}
+            }
+
+            var options1 = {
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE,
+                pattern: BABYLON.Mesh.NO_FLIP,
+                height: 4,
+                width: 20,
+                tileSize: 2
+            }
+
+            var options2 = {
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE,
+                pattern: BABYLON.Mesh.NO_FLIP,
+                height: 4,
+                width: 10,
+                tileSize: 2
+            }
+
+            var ground = new BABYLON.MeshBuilder.CreateTiledGround("ground", groundoption, scene); // create the ground
+            ground.material = floormat1;
+            
+            var wall1 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_north", options1, scene); // create the wall for the ground to make room
+            wall1.position = new BABYLON.Vector3(0, 2, 5);
+            wall1.material = wallmat1;
+            
+            var wall2 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_east", options2, scene); // wall for room
+            wall2.position = new BABYLON.Vector3(10, 2, 0);
+            wall2.rotation.y = Math.PI / 2;
+            wall2.material = wallmat1;
+            
+            var wall3 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_south", options1, scene); // wall for room
+            wall3.position = new BABYLON.Vector3(0, 2, -5);
+            wall3.material = wallmat1;
+
+            var wall4 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_west", options2, scene) // wall for room
+            wall4.position = new BABYLON.Vector3(-10, 2, 0);
+            wall4.rotation.y = Math.PI / 2;
+            wall4.material = wallmat1;
+
+            undeletable_meshes.push(ground);
+            undeletable_meshes.push(wall1);
+            undeletable_meshes.push(wall2);
+            undeletable_meshes.push(wall3);
+            undeletable_meshes.push(wall4);
+
+            ground.checkCollisions = true;
+            wall1.checkCollisions = true;
+            wall2.checkCollisions = true;
+            wall3.checkCollisions = true;
+            wall4.checkCollisions = true;
+
+            /* BABYLON.SceneLoader.ImportMesh("", "./chair/", "chair.obj", scene, function(newMeshes){
+                var chair = newMeshes[0];
+                chair.position = new BABYLON.Vector3(5, 0.5, 0);
+                chair.rotation.y = Math.PI;
+            }); */
+
+            BABYLON.SceneLoader.ImportMesh("", "./wooden-coffe-table/", "wooden-coffe-table.babylon", scene, function(newMeshes){
+                table = newMeshes[0];
+                table.position = new BABYLON.Vector3(4, 0, 0);
+                
+                // table.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
+            });
+
+            // GUI
+             
+            var ui = new BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene); // create the base ui
+
+            var wallbut1 = new BABYLON.GUI.Button.CreateImageOnlyButton("wall_button", "./materials/wallmat1.jpg"); // create button
+            wallbut1.width = "70px";
+            wallbut1.height = "70px";
+            wallbut1.color = "#000000";
+            wallbut1.background = "#ffffff";
+            wallbut1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            wallbut1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            wallbut1.left = "10px";
+            wallbut1.top = "-120px";
+            wallbut1.onPointerUpObservable.add(function(){
+                wall1.material = wallmat1;
+                wall2.material = wallmat1;
+                wall3.material = wallmat1;
+                wall4.material = wallmat1;
+            });
+
+            var wallbut2 = new BABYLON.GUI.Button.CreateImageOnlyButton("wall_button2", "./materials/wallmat2.jpg");
+            wallbut2.width = "70px";
+            wallbut2.height = "70px";
+            wallbut2.color = "#000000";
+            wallbut2.background = "#ffffff";
+            wallbut2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            wallbut2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            wallbut2.left = "90px";
+            wallbut2.top = "-120px";
+            wallbut2.onPointerUpObservable.add(function(){
+                wall1.material = wallmat2;
+                wall2.material = wallmat2;
+                wall3.material = wallmat2;
+                wall4.material = wallmat2;
+            });
+
+            var floorbut1 = new BABYLON.GUI.Button.CreateImageOnlyButton("floor_button", "./materials/floormat1.jpg");
+            floorbut1.width = "70px";
+            floorbut1.height = "70px";
+            floorbut1.color = "#000000";
+            floorbut1.background = "#ffffff";
+            floorbut1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            floorbut1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            floorbut1.left = "10px";
+            floorbut1.top = "-20px";
+            floorbut1.onPointerUpObservable.add(function(){ 
+                ground.material = floormat1;
+            });
+
+            var floorbut2 = new BABYLON.GUI.Button.CreateImageOnlyButton("floor_button2", "./materials/floormat2.jpg");
+            floorbut2.width = "70px";
+            floorbut2.height = "70px";
+            floorbut2.color = "#000000";
+            floorbut2.background = "#ffffff";
+            floorbut2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            floorbut2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            floorbut2.left = "90px";
+            floorbut2.top = "-20px";
+            floorbut2.onPointerUpObservable.add(function(){ 
+                ground.material = floormat2;
+            });
+
+            var chairadd = new BABYLON.GUI.Button.CreateSimpleButton("chair_add", "Add chair");
+            chairadd.width = "70px";
+            chairadd.height = "70px";
+            chairadd.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            chairadd.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            chairadd.left = "-90px";
+            chairadd.top = "-120px";
+            chairadd.onPointerUpObservable.add(function(){
+                BABYLON.SceneLoader.ImportMesh(null, "./chair/", "chair.obj", scene, function(meshes) {
+                    var chair = meshes[0];
+
+                    for (var i = 1; i < meshes.length; i++) {
+                        chair = BABYLON.Mesh.MergeMeshes([chair, meshes[i]], true, true, undefined, false, true);
+                    }
+
+                    chair.isPickable = true;
+                    gizmoManager.attachableMeshes.push(chair);
+                });
+            });
+
+            var tableadd = new BABYLON.GUI.Button.CreateSimpleButton("table_add", "Add table");
+            tableadd.width = "70px";
+            tableadd.height = "70px";
+            tableadd.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            tableadd.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            tableadd.left = "-10px";
+            tableadd.top = "-120px";
+            tableadd.onPointerUpObservable.add(function(){
+                BABYLON.SceneLoader.ImportMesh(null, "./table/", "table.obj", scene, function(meshes) {
+                    var table = meshes[0];
+
+                    for (var i = 1; i < meshes.length; i++) {
+                        table = BABYLON.Mesh.MergeMeshes([table, meshes[i]], true, true, undefined, false, true);
+                    }
+
+                    table.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
+                    gizmoManager.attachableMeshes.push(table);
+                });
+            });
+
+            var save_scene = new BABYLON.GUI.Button.CreateSimpleButton("save_scene", "Save Scene");
+            save_scene.width = "100px";
+            save_scene.height = "35px";
+            save_scene.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            save_scene.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+            save_scene.left = "10px";
+            save_scene.top = "10px";
+            save_scene.onPointerUpObservable.add(function(){
+                if (confirm('Do you want to download that scene?')) {
+                        download_scene('scene.babylon', scene);
+                }
+            });
+
+            ui.addControl(wallbut1);
+            ui.addControl(wallbut2);
+            ui.addControl(floorbut1);
+            ui.addControl(floorbut2);
+            ui.addControl(chairadd);
+            ui.addControl(tableadd);
+            ui.addControl(save_scene);
+
+
+            return scene;
+        };
+
+        var downloadUrl;
+        function download_scene(filename, scene) {
+            // delete download url if it exists
+            if(downloadUrl) {
+                window.URL.revokedownloadUrl(downloadUrl);
+            }
+
+            // serializer scene
+            var serializedScene = BABYLON.SceneSerializer.Serialize(scene);
+
+            // convert serialized scene into string
+            var strScene = JSON.stringify(serializedScene);
+
+            // create a blob from the string
+            var blob = new Blob ( [ strScene ], { type : "octet/stream" } );
+
+            // turn blob into an object URL
+            downloadUrl = window.URL.createObjectURL(blob);
+
+            // create download element
+            var link = window.document.createElement('a');
+            link.href = downloadUrl;
+            link.download = filename;
+
+            // create click event to click the link
+            var click = document.createEvent("MouseEvents");
+            click.initEvent("click", true, false);
+            link.dispatchEvent(click);          
+        }
+
+        var scene = createScene(); // scene displaying goes here...
+
+        
+        engine.runRenderLoop(function(){ // renders the scene via loop
+            scene.render();
+        });
+
+        window.addEventListener("resize", function(){
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

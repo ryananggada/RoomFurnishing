@@ -34,18 +34,27 @@
         var createScene = function(){
             var scene = new BABYLON.Scene(engine); // the scene
             scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
-
             scene.collisionsEnabled = true;
 
             var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene); // the light of the scene
 
-            var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 4, 20, new BABYLON.Vector3(0, 0, 0), scene); // viewing camera
-            // var camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 2, 0), scene); // first person camera
-            camera.attachControl(canvas, true); // attach camera to canvas
-            camera.checkCollisions = true;
-            camera.applyGravity = true;
+            var camera1 = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 4, 25, new BABYLON.Vector3(0, 0, 0), scene); // viewing camera
+            var camera2 = new BABYLON.UniversalCamera("camera_1person", new BABYLON.Vector3(0, 2, 0), scene);
+            camera1.attachControl(canvas, true); // attach camera to canvas
+            camera2.checkCollisions = true;
+            camera2.applyGravity = true;
 
-            // camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
+            var setArcCam = function(){
+                scene.activeCamera = camera1;
+                camera1.attachControl(canvas, true);
+            };
+
+            var setUniCam = function(){
+                scene.activeCamera = camera2;
+                camera2.attachControl(canvas, true);
+            };
+
+            camera2.ellipsoid = new BABYLON.Vector3(1, 1, 1);
 
             var gizmoManager = new BABYLON.GizmoManager(scene);
             gizmoManager.boundingBoxGizmoEnabled = true;
@@ -56,11 +65,10 @@
 
             scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
                 map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
-
             }));
             
             scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
-                map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+                map[evt.sourceEvent.key] = evt.sourceEvent.type == "keyup";
             }));
 
             var delete_item = false;
@@ -100,10 +108,7 @@
                     gizmoManager.scaleGizmoEnabled = false;
                     gizmoManager.boundingBoxGizmoEnabled = false;
                     delete_item = true;
-                    console.log(delete_item);
                 };
-
-                
             });
 
             scene.onPointerDown = function(evt, pickResult) {
@@ -129,7 +134,7 @@
 
             // options for the mesh builder
 
-            var groundoption = {
+            var optground_a = {
                 xmin: -10,
                 zmin: -5,
                 xmax: 10,
@@ -138,48 +143,124 @@
                 precision: {h: 2, w: 2}
             }
 
-            var options1 = {
+            var optground_b = {
+                xmin: -12,
+                zmin: -12,
+                xmax: 12,
+                zmax: 12,
+                subdivisions: {h: 12, w: 12},
+                precision: {h: 2, w: 2}
+            }
+
+            var optwall_a1 = {
                 sideOrientation: BABYLON.Mesh.DOUBLESIDE,
                 pattern: BABYLON.Mesh.NO_FLIP,
                 height: 4,
-                width: 20,
+                width: 21,
+                depth: 0.5,
                 tileSize: 2
             }
 
-            var options2 = {
+            var optwall_a2 = {
                 sideOrientation: BABYLON.Mesh.DOUBLESIDE,
                 pattern: BABYLON.Mesh.NO_FLIP,
                 height: 4,
                 width: 10,
+                depth: 0.5,
                 tileSize: 2
             }
 
-            var ground = new BABYLON.MeshBuilder.CreateTiledGround("ground", groundoption, scene); // create the ground
-            ground.material = floormat1;
-            
-            var wall1 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_north", options1, scene); // create the wall for the ground to make room
-            wall1.position = new BABYLON.Vector3(0, 2, 5);
-            wall1.material = wallmat1;
-            
-            var wall2 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_east", options2, scene); // wall for room
-            wall2.position = new BABYLON.Vector3(10, 2, 0);
-            wall2.rotation.y = Math.PI / 2;
-            wall2.material = wallmat1;
-            
-            var wall3 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_south", options1, scene); // wall for room
-            wall3.position = new BABYLON.Vector3(0, 2, -5);
-            wall3.material = wallmat1;
+            var optwall_b1 = {
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE,
+                pattern: BABYLON.Mesh.NO_FLIP,
+                height: 4,
+                width: 24,
+                depth: 0.5,
+                tileSize: 2
+            }
 
-            var wall4 = new BABYLON.MeshBuilder.CreateTiledPlane("wall_west", options2, scene) // wall for room
-            wall4.position = new BABYLON.Vector3(-10, 2, 0);
-            wall4.rotation.y = Math.PI / 2;
-            wall4.material = wallmat1;
+            var optwall_b2 = {
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE,
+                pattern: BABYLON.Mesh.NO_FLIP,
+                height: 4,
+                width: 25,
+                depth: 0.5,
+                tileSize: 2
+            }
 
-            ground.checkCollisions = true;
-            wall1.checkCollisions = true;
-            wall2.checkCollisions = true;
-            wall3.checkCollisions = true;
-            wall4.checkCollisions = true;
+            var optwall_b3 = {
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE,
+                pattern: BABYLON.Mesh.NO_FLIP,
+                height: 4,
+                width: 11.75,
+                depth: 0.5,
+                tileSize: 2
+            }
+
+            var ground_a = new BABYLON.MeshBuilder.CreateTiledGround("ground_a", optground_a, scene); // create the ground
+            ground_a.material = floormat1;
+
+            var ground_b = new BABYLON.MeshBuilder.CreateTiledGround("ground_b", optground_b, scene);
+            ground_b.material = floormat1;
+            
+            var wall_a1 = new BABYLON.MeshBuilder.CreateTiledBox("wall_a1", optwall_a1, scene); // create the wall for the ground to make room
+            wall_a1.position = new BABYLON.Vector3(0, 2, 5.25);
+            wall_a1.material = wallmat1;
+            
+            var wall_a2 = new BABYLON.MeshBuilder.CreateTiledBox("wall_a2", optwall_a2, scene); // wall for room
+            wall_a2.position = new BABYLON.Vector3(10.25, 2, 0);
+            wall_a2.rotation.y = Math.PI / 2;
+            wall_a2.material = wallmat1;
+            
+            var wall_a3 = new BABYLON.MeshBuilder.CreateTiledBox("wall_a3", optwall_a1, scene); // wall for room
+            wall_a3.position = new BABYLON.Vector3(0, 2, -5.25);
+            wall_a3.material = wallmat1;
+
+            var wall_a4 = new BABYLON.MeshBuilder.CreateTiledBox("wall_a4", optwall_a2, scene) // wall for room
+            wall_a4.position = new BABYLON.Vector3(-10.25, 2, 0);
+            wall_a4.rotation.y -= Math.PI / 2;
+            wall_a4.material = wallmat1;
+
+            var wall_b1 = new BABYLON.MeshBuilder.CreateTiledBox("wall_b1", optwall_b1, scene);
+            wall_b1.position = new BABYLON.Vector3(0, 2, 12.25);
+            wall_b1.material = wallmat1;
+
+            var wall_b2 = new BABYLON.MeshBuilder.CreateTiledBox("wall_b2", optwall_b2, scene);
+            wall_b2.position = new BABYLON.Vector3(12.25, 2, 0);
+            wall_b2.rotation.y = Math.PI / 2;
+            wall_b2.material = wallmat1;
+
+            var wall_b3 = new BABYLON.MeshBuilder.CreateTiledBox("wall_b3", optwall_b1, scene);
+            wall_b3.position = new BABYLON.Vector3(0, 2, -12.25);
+            wall_b3.material = wallmat1;
+
+            var wall_b4 = new BABYLON.MeshBuilder.CreateTiledBox("wall_b4", optwall_b2, scene);
+            wall_b4.position = new BABYLON.Vector3(-12.25, 2, 0);
+            wall_b4.rotation.y -= Math.PI / 2;
+            wall_b4.material = wallmat1;
+
+            var wall_b5 = new BABYLON.MeshBuilder.CreateTiledBox("wall_b5", optwall_b1, scene);
+            wall_b5.position = new BABYLON.Vector3(0, 2, 0);
+            wall_b5.material = wallmat1;
+            
+            var wall_b6 = new BABYLON.MeshBuilder.CreateTiledBox("wall_b6", optwall_b3, scene);
+            wall_b6.position = new BABYLON.Vector3(0, 2, 6.125);
+            wall_b6.rotation.y -= Math.PI / 2;
+            wall_b6.material = wallmat1;
+
+            ground_a.checkCollisions = true;
+            wall_a1.checkCollisions = true;
+            wall_a2.checkCollisions = true;
+            wall_a3.checkCollisions = true;
+            wall_a4.checkCollisions = true;
+
+            ground_b.isVisible = false;
+            wall_b1.isVisible = false;
+            wall_b2.isVisible = false;
+            wall_b3.isVisible = false;
+            wall_b4.isVisible = false;
+            wall_b5.isVisible = false;
+            wall_b6.isVisible = false;
 
             /* BABYLON.SceneLoader.ImportMesh("", "./chair/", "chair.obj", scene, function(newMeshes){
                 var chair = newMeshes[0];
@@ -187,83 +268,85 @@
                 chair.rotation.y = Math.PI;
             }); */
 
-            BABYLON.SceneLoader.ImportMesh("", "./wooden-coffe-table/", "wooden-coffe-table.babylon", scene, function(newMeshes){
+            /* BABYLON.SceneLoader.ImportMesh("", "./wooden-coffe-table/", "wooden-coffe-table.babylon", scene, function(newMeshes){
                 table = newMeshes[0];
                 table.position = new BABYLON.Vector3(4, 0, 0);
                 // table.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
-            });
+            }); */
 
             // GUI
              
             var ui = new BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene); // create the base ui
 
-            var wallbut1 = new BABYLON.GUI.Button.CreateImageOnlyButton("wall_button", "./materials/wallmat1.jpg"); // create button
-            wallbut1.width = "70px";
-            wallbut1.height = "70px";
-            wallbut1.color = "#000000";
-            wallbut1.background = "#ffffff";
-            wallbut1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-            wallbut1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-            wallbut1.left = "10px";
-            wallbut1.top = "-120px";
-            wallbut1.onPointerUpObservable.add(function(){
-                wall1.material = wallmat1;
-                wall2.material = wallmat1;
-                wall3.material = wallmat1;
-                wall4.material = wallmat1;
+            var wallmaster = new BABYLON.GUI.Button.CreateSimpleButton("wall_button_master", "Show wall");
+
+            var wall_but1 = new BABYLON.GUI.Button.CreateImageOnlyButton("wall_button", "./materials/wallmat1.jpg"); // create button
+            wall_but1.width = "70px";
+            wall_but1.height = "70px";
+            wall_but1.color = "#000000";
+            wall_but1.background = "#ffffff";
+            wall_but1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            wall_but1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            wall_but1.left = "10px";
+            wall_but1.top = "-120px";
+            wall_but1.onPointerUpObservable.add(function(){
+                wall_a1.material = wallmat1;
+                wall_a2.material = wallmat1;
+                wall_a3.material = wallmat1;
+                wall_a4.material = wallmat1;
             });
 
-            var wallbut2 = new BABYLON.GUI.Button.CreateImageOnlyButton("wall_button2", "./materials/wallmat2.jpg");
-            wallbut2.width = "70px";
-            wallbut2.height = "70px";
-            wallbut2.color = "#000000";
-            wallbut2.background = "#ffffff";
-            wallbut2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-            wallbut2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-            wallbut2.left = "90px";
-            wallbut2.top = "-120px";
-            wallbut2.onPointerUpObservable.add(function(){
-                wall1.material = wallmat2;
-                wall2.material = wallmat2;
-                wall3.material = wallmat2;
-                wall4.material = wallmat2;
+            var wall_but2 = new BABYLON.GUI.Button.CreateImageOnlyButton("wall_button2", "./materials/wallmat2.jpg");
+            wall_but2.width = "70px";
+            wall_but2.height = "70px";
+            wall_but2.color = "#000000";
+            wall_but2.background = "#ffffff";
+            wall_but2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            wall_but2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            wall_but2.left = "90px";
+            wall_but2.top = "-120px";
+            wall_but2.onPointerUpObservable.add(function(){
+                wall_a1.material = wallmat2;
+                wall_a2.material = wallmat2;
+                wall_a3.material = wallmat2;
+                wall_a4.material = wallmat2;
             });
 
-            var floorbut1 = new BABYLON.GUI.Button.CreateImageOnlyButton("floor_button", "./materials/floormat1.jpg");
-            floorbut1.width = "70px";
-            floorbut1.height = "70px";
-            floorbut1.color = "#000000";
-            floorbut1.background = "#ffffff";
-            floorbut1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-            floorbut1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-            floorbut1.left = "10px";
-            floorbut1.top = "-20px";
-            floorbut1.onPointerUpObservable.add(function(){ 
-                ground.material = floormat1;
+            var floor_but1 = new BABYLON.GUI.Button.CreateImageOnlyButton("floor_button", "./materials/floormat1.jpg");
+            floor_but1.width = "70px";
+            floor_but1.height = "70px";
+            floor_but1.color = "#000000";
+            floor_but1.background = "#ffffff";
+            floor_but1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            floor_but1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            floor_but1.left = "10px";
+            floor_but1.top = "-20px";
+            floor_but1.onPointerUpObservable.add(function(){ 
+                ground_a.material = floormat1;
             });
 
-            var floorbut2 = new BABYLON.GUI.Button.CreateImageOnlyButton("floor_button2", "./materials/floormat2.jpg");
-            floorbut2.width = "70px";
-            floorbut2.height = "70px";
-            floorbut2.color = "#000000";
-            floorbut2.background = "#ffffff";
-            floorbut2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-            floorbut2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-            floorbut2.left = "90px";
-            floorbut2.top = "-20px";
-            floorbut2.onPointerUpObservable.add(function(){ 
-                ground.material = floormat2;
+            var floor_but2 = new BABYLON.GUI.Button.CreateImageOnlyButton("floor_button2", "./materials/floormat2.jpg");
+            floor_but2.width = "70px";
+            floor_but2.height = "70px";
+            floor_but2.color = "#000000";
+            floor_but2.background = "#ffffff";
+            floor_but2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            floor_but2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            floor_but2.left = "90px";
+            floor_but2.top = "-20px";
+            floor_but2.onPointerUpObservable.add(function(){ 
+                ground_a.material = floormat2;
             });
 
-            var chairadd = new BABYLON.GUI.Button.CreateSimpleButton("chair_add", "Add chair");
-            chairadd.width = "70px";
-            chairadd.height = "70px";
-            chairadd.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-            chairadd.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-            chairadd.left = "-90px";
-            chairadd.top = "-120px";
-            chairadd.onPointerUpObservable.add(function(){
-                BABYLON.SceneLoader.ImportMesh(null, "./chair/", "chair.obj", scene, function(meshes) {
+            var chair_add = new BABYLON.GUI.Button.CreateSimpleButton("chair_add", "Add chair");
+            chair_add.width = "70px";
+            chair_add.height = "70px";
+            chair_add.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            chair_add.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            chair_add.left = "-90px";
+            chair_add.top = "-120px";
+            chair_add.onPointerUpObservable.add(function(){
+                BABYLON.SceneLoader.ImportMesh(null, "./furnitures/bedroom/chair/", "chair.obj", scene, function(meshes) {
                     var chair = meshes[0];
 
                     for (var i = 1; i < meshes.length; i++) {
@@ -275,15 +358,15 @@
                 });
             });
 
-            var tableadd = new BABYLON.GUI.Button.CreateSimpleButton("table_add", "Add table");
-            tableadd.width = "70px";
-            tableadd.height = "70px";
-            tableadd.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-            tableadd.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-            tableadd.left = "-10px";
-            tableadd.top = "-120px";
-            tableadd.onPointerUpObservable.add(function(){
-                BABYLON.SceneLoader.ImportMesh(null, "./table/", "table.obj", scene, function(meshes) {
+            var table_add = new BABYLON.GUI.Button.CreateSimpleButton("table_add", "Add table");
+            table_add.width = "70px";
+            table_add.height = "70px";
+            table_add.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            table_add.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            table_add.left = "-10px";
+            table_add.top = "-120px";
+            table_add.onPointerUpObservable.add(function(){
+                BABYLON.SceneLoader.ImportMesh(null, "./furnitures/livingroom/sofa/", "sofa.obj", scene, function(meshes) {
                     var table = meshes[0];
 
                     for (var i = 1; i < meshes.length; i++) {
@@ -295,12 +378,109 @@
                 });
             });
 
-            ui.addControl(wallbut1);
-            ui.addControl(wallbut2);
-            ui.addControl(floorbut1);
-            ui.addControl(floorbut2);
-            ui.addControl(chairadd);
-            ui.addControl(tableadd);
+            var cam_uni = new BABYLON.GUI.Button.CreateSimpleButton("camera_uni", "Change to first person view");
+            cam_uni.width = "70px";
+            cam_uni.height = "70px";
+            cam_uni.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            cam_uni.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+            cam_uni.left = "10px";
+            cam_uni.top = "10px";
+            cam_uni.onPointerUpObservable.add(function(){
+                setUniCam();
+                cam_arc.isVisible = true;
+                cam_uni.isVisible = false;
+            });
+
+            var cam_arc = new BABYLON.GUI.Button.CreateSimpleButton("camera_arc", "Change to third person view");
+            cam_arc.width = "70px";
+            cam_arc.height = "70px";
+            cam_arc.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            cam_arc.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+            cam_arc.left = "10px";
+            cam_arc.top = "10px";
+            cam_arc.onPointerUpObservable.add(function(){
+                setArcCam();
+                cam_arc.isVisible = false;
+                cam_uni.isVisible = true;
+            });
+
+            var room_a = new BABYLON.GUI.Button.CreateSimpleButton("swap_scene_a", "Scene A");
+            room_a.width = "70px";
+            room_a.height = "70px";
+            room_a.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            room_a.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+            room_a.left = "-90px";
+            room_a.top = "10px";
+            room_a.onPointerUpObservable.add(function(){
+                if (confirm('Are you sure you want to change to scene A? Any unsaved changes will be lost!')) {
+                    ground_a.isVisible = true;
+                    wall_a1.isVisible = true;
+                    wall_a2.isVisible = true;
+                    wall_a3.isVisible = true;
+                    wall_a4.isVisible = true;
+
+                    ground_b.isVisible = false;
+                    wall_b1.isVisible = false;
+                    wall_b2.isVisible = false;
+                    wall_b3.isVisible = false;
+                    wall_b4.isVisible = false;
+                    wall_b5.isVisible = false;
+                    wall_b6.isVisible = false;
+                }
+            });
+
+            var room_b = new BABYLON.GUI.Button.CreateSimpleButton("swap_scene_b", "Scene B");
+            room_b.width = "70px";
+            room_b.height = "70px";
+            room_b.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            room_b.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+            room_b.left = "-10px";
+            room_b.top = "10px";
+            room_b.onPointerUpObservable.add(function(){
+                if (confirm('Are you sure you want to change to scene B? Any unsaved changes will be lost!')) {
+                    ground_a.isVisible = false;
+                    wall_a1.isVisible = false;
+                    wall_a2.isVisible = false;
+                    wall_a3.isVisible = false;
+                    wall_a4.isVisible = false;
+
+                    ground_b.isVisible = true;
+                    wall_b1.isVisible = true;
+                    wall_b2.isVisible = true;
+                    wall_b3.isVisible = true;
+                    wall_b4.isVisible = true;
+                    wall_b5.isVisible = true;
+                    wall_b6.isVisible = true;
+                }
+            });
+
+            var save_scene = new BABYLON.GUI.Button.CreateSimpleButton("save_scene", "Save Scene");
+            save_scene.width = "100px";
+            save_scene.height = "35px";
+            save_scene.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            save_scene.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+            save_scene.left = "10px";
+            save_scene.top = "10px";
+            save_scene.onPointerUpObservable.add(function(){
+                if (confirm('Do you want to download that scene?')) {
+                        download_scene('scene.babylon', scene);
+                }
+            });
+
+
+            ui.addControl(wall_but1);
+            ui.addControl(wall_but2);
+            ui.addControl(floor_but1);
+            ui.addControl(floor_but2);
+            ui.addControl(chair_add);
+            ui.addControl(table_add);
+            ui.addControl(cam_uni);
+            ui.addControl(cam_arc);
+            ui.addControl(room_a);
+            ui.addControl(room_b);
+            ui.addControl(save_scene);
+
+            cam_arc.isVisible = false;
 
             return scene;
         }
