@@ -391,7 +391,7 @@
 
                     chair = BABYLON.Mesh.MergeMeshes(meshes, true, true, undefined, false, true)
                     chair.position = new BABYLON.Vector3(0,6,0);                    
-
+                    chair.checkCollisions = true;
                     chair.isPickable = true;
                     gizmoManager.attachableMeshes.push(chair);
                 });
@@ -409,7 +409,7 @@
                     var table = meshes[0];
 
                     table = BABYLON.Mesh.MergeMeshes(meshes, true, true, undefined, false, true)
-                    
+                    table.checkCollisions = true;
 
                     table.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
                     table.position = new BABYLON.Vector3(0,6,0);
@@ -551,6 +551,7 @@
                         catch(error){
                             console.log(error);
                         }
+                        mesh.checkCollisions = true;
                         mesh.position = new BABYLON.Vector3(0,6,0);
                         gizmoManager.attachableMeshes.push(mesh);
                     });
