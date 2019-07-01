@@ -57,8 +57,10 @@
             camera2.ellipsoid = new BABYLON.Vector3(1, 1, 1);
 
             var gizmoManager = new BABYLON.GizmoManager(scene);
-            gizmoManager.boundingBoxGizmoEnabled = true;
             gizmoManager.attachableMeshes = [];
+
+            // create undeletable objects for walls and floors
+            var undeletable_meshes = [];
 
             var map = {}; //object for multiple key presses
             scene.actionManager = new BABYLON.ActionManager(scene);
@@ -68,52 +70,78 @@
             }));
             
             scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
-                map[evt.sourceEvent.key] = evt.sourceEvent.type == "keyup";
+                map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
             }));
 
             var delete_item = false;
-            
+            var clone_item = false;
+
             scene.registerBeforeRender(function () {
                 if ((map["z"] || map["Z"])) {
                     gizmoManager.positionGizmoEnabled = true;
                     gizmoManager.rotationGizmoEnabled = false;
                     gizmoManager.scaleGizmoEnabled = false;
                     gizmoManager.boundingBoxGizmoEnabled = false;
+                    delete_item = false;
+                    clone_item = false;
                 };
                 if ((map["x"] || map["X"])) {
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = true;
                     gizmoManager.scaleGizmoEnabled = false;
                     gizmoManager.boundingBoxGizmoEnabled = false;
+                    delete_item = false;
+                    clone_item = false;
                 };
                 if ((map["c"] || map["C"])) {
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = false;
                     gizmoManager.scaleGizmoEnabled = true;
                     gizmoManager.boundingBoxGizmoEnabled = true;
+                    delete_item = false;
+                    clone_item = false;
                 };
-                if (map["b"]){
+                if (map["v"] || map["V"]) {
+                    gizmoManager.positionGizmoEnabled = false;
+                    gizmoManager.rotationGizmoEnabled = false;
+                    gizmoManager.scaleGizmoEnabled = false;
+                    gizmoManager.boundingBoxGizmoEnabled = false;
+                    delete_item = false;
+                    clone_item = true;
+                }
+                if (map["b"] || map["B"]){
                     gizmoManager.attachToMesh(null);
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = false;
                     gizmoManager.scaleGizmoEnabled = false;
                     gizmoManager.boundingBoxGizmoEnabled = false;
                     delete_item = false;
+                    clone_item = false;
                 };
 
-                if (map["n"]) {
+                if (map["n"] || map["N"]) {
                     gizmoManager.attachToMesh(null);
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = false;
                     gizmoManager.scaleGizmoEnabled = false;
                     gizmoManager.boundingBoxGizmoEnabled = false;
                     delete_item = true;
+                    clone_item = false;
                 };
             });
 
             scene.onPointerDown = function(evt, pickResult) {
-                if (pickResult.pickedMesh && delete_item == true) {
-                    pickResult.pickedMesh.dispose();
+                if (pickResult.pickedMesh) {
+                    if(!undeletable_meshes.includes(pickResult.pickedMesh) && delete_item == true){
+                        pickResult.pickedMesh.dispose();
+                    }
+                    else if(clone_item == true){
+                        newclone = pickResult.pickedMesh.clone();
+                        newclone.makeGeometryUnique();
+                        newclone.position = new BABYLON.Vector3(0,6,0);
+                        gizmoManager.attachableMeshes.push(newclone);
+
+                    }
                 };
             };
 		
@@ -253,6 +281,11 @@
             wall_a2.checkCollisions = true;
             wall_a3.checkCollisions = true;
             wall_a4.checkCollisions = true;
+            undeletable_meshes.push(ground_a);
+            undeletable_meshes.push(wall_a1);
+            undeletable_meshes.push(wall_a2);
+            undeletable_meshes.push(wall_a3);
+            undeletable_meshes.push(wall_a4);
 
             ground_b.isVisible = false;
             wall_b1.isVisible = false;
@@ -261,6 +294,13 @@
             wall_b4.isVisible = false;
             wall_b5.isVisible = false;
             wall_b6.isVisible = false;
+            undeletable_meshes.push(ground_b);
+            undeletable_meshes.push(wall_b1);
+            undeletable_meshes.push(wall_b2);
+            undeletable_meshes.push(wall_b3);
+            undeletable_meshes.push(wall_b4);
+            undeletable_meshes.push(wall_b5);
+            undeletable_meshes.push(wall_b6);
 
             /* BABYLON.SceneLoader.ImportMesh("", "./chair/", "chair.obj", scene, function(newMeshes){
                 var chair = newMeshes[0];
@@ -349,9 +389,8 @@
                 BABYLON.SceneLoader.ImportMesh(null, "./furnitures/bedroom/chair/", "chair.obj", scene, function(meshes) {
                     var chair = meshes[0];
 
-                    for (var i = 1; i < meshes.length; i++) {
-                        chair = BABYLON.Mesh.MergeMeshes([chair, meshes[i]], true, true, undefined, false, true);
-                    }
+                    chair = BABYLON.Mesh.MergeMeshes(meshes, true, true, undefined, false, true)
+                    chair.position = new BABYLON.Vector3(0,6,0);                    
 
                     chair.isPickable = true;
                     gizmoManager.attachableMeshes.push(chair);
@@ -369,21 +408,21 @@
                 BABYLON.SceneLoader.ImportMesh(null, "./furnitures/livingroom/sofa/", "sofa.obj", scene, function(meshes) {
                     var table = meshes[0];
 
-                    for (var i = 1; i < meshes.length; i++) {
-                        table = BABYLON.Mesh.MergeMeshes([table, meshes[i]], true, true, undefined, false, true);
-                    }
+                    table = BABYLON.Mesh.MergeMeshes(meshes, true, true, undefined, false, true)
+                    
 
                     table.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
+                    table.position = new BABYLON.Vector3(0,6,0);
                     gizmoManager.attachableMeshes.push(table);
                 });
             });
 
-            var cam_uni = new BABYLON.GUI.Button.CreateSimpleButton("camera_uni", "Change to first person view");
-            cam_uni.width = "70px";
-            cam_uni.height = "70px";
+            var cam_uni = new BABYLON.GUI.Button.CreateSimpleButton("camera_uni", "First person view");
+            cam_uni.width = "200px";
+            cam_uni.height = "35px";
             cam_uni.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
             cam_uni.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-            cam_uni.left = "10px";
+            cam_uni.left = "230px";
             cam_uni.top = "10px";
             cam_uni.onPointerUpObservable.add(function(){
                 setUniCam();
@@ -391,12 +430,12 @@
                 cam_uni.isVisible = false;
             });
 
-            var cam_arc = new BABYLON.GUI.Button.CreateSimpleButton("camera_arc", "Change to third person view");
-            cam_arc.width = "70px";
-            cam_arc.height = "70px";
+            var cam_arc = new BABYLON.GUI.Button.CreateSimpleButton("camera_arc", "Third person view");
+            cam_arc.width = "200px";
+            cam_arc.height = "35px";
             cam_arc.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
             cam_arc.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-            cam_arc.left = "10px";
+            cam_arc.left = "230px";
             cam_arc.top = "10px";
             cam_arc.onPointerUpObservable.add(function(){
                 setArcCam();
@@ -426,6 +465,9 @@
                     wall_b4.isVisible = false;
                     wall_b5.isVisible = false;
                     wall_b6.isVisible = false;
+                    for (var i = 0; i < gizmoManager.attachableMeshes.length; i++) {
+                        gizmoManager.attachableMeshes[i].dispose();
+                    }
                 }
             });
 
@@ -451,9 +493,13 @@
                     wall_b4.isVisible = true;
                     wall_b5.isVisible = true;
                     wall_b6.isVisible = true;
+                    for (var i = 0; i < gizmoManager.attachableMeshes.length; i++) {
+                        gizmoManager.attachableMeshes[i].dispose();
+                    }
                 }
             });
 
+            // save scene button
             var save_scene = new BABYLON.GUI.Button.CreateSimpleButton("save_scene", "Save Scene");
             save_scene.width = "100px";
             save_scene.height = "35px";
@@ -467,6 +513,59 @@
                 }
             });
 
+            // upload item button
+            var upload_item = new BABYLON.GUI.Button.CreateSimpleButton("upload_item", "Upload Item");
+            upload_item.width = "100px";
+            upload_item.height = "35px";
+            upload_item.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            upload_item.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+            upload_item.left = "120px";
+            upload_item.top = "10px";
+            upload_item.onPointerUpObservable.add(function(evt){
+                
+                // create input_form 
+                var input_form = window.document.createElement('input');
+                input_form.type = "file";
+                input_form.id = "files";
+                
+                // create file handler function
+                function handle_file(evt) {
+
+                    // get file from form
+                    var files = evt.target.files;
+
+                    // create a temporary URL for file
+                    var tmp_path = URL.createObjectURL(files[0]);
+                    console.log(tmp_path);
+                    // append file
+                    BABYLON.SceneLoader.ImportMesh(null, "",tmp_path, scene, function(meshes) {
+                        
+                        var mesh = meshes[0];
+                        
+                        console.log(meshes);
+                        try{
+                            // merge the mesh into one
+                            mesh = BABYLON.Mesh.MergeMeshes(meshes, true, true, undefined, false, true);
+                            
+                        }
+                        catch(error){
+                            console.log(error);
+                        }
+                        mesh.position = new BABYLON.Vector3(0,6,0);
+                        gizmoManager.attachableMeshes.push(mesh);
+                    });
+                
+                    
+                }
+                // set listener onto file uploader
+                input_form.addEventListener('change', handle_file, false);
+
+                // create click event to click the input_form
+                var click = document.createEvent("MouseEvents");
+                click.initEvent("click", true, false);
+                input_form.dispatchEvent(click);
+                
+            });
 
             ui.addControl(wall_but1);
             ui.addControl(wall_but2);
@@ -479,10 +578,41 @@
             ui.addControl(room_a);
             ui.addControl(room_b);
             ui.addControl(save_scene);
+            ui.addControl(upload_item);
 
             cam_arc.isVisible = false;
 
             return scene;
+        };
+
+        var downloadUrl;
+        function download_scene(filename, scene) {
+            // delete download url if it exists
+            if(downloadUrl) {
+                window.URL.revokedownloadUrl(downloadUrl);
+            }
+
+            // serializer scene
+            var serializedScene = BABYLON.SceneSerializer.Serialize(scene);
+
+            // convert serialized scene into string
+            var strScene = JSON.stringify(serializedScene);
+
+            // create a blob from the string
+            var blob = new Blob ( [ strScene ], { type : "octet/stream" } );
+
+            // turn blob into an object URL
+            downloadUrl = window.URL.createObjectURL(blob);
+
+            // create download element
+            var link = window.document.createElement('a');
+            link.href = downloadUrl;
+            link.download = filename;
+
+            // create click event to click the link
+            var click = document.createEvent("MouseEvents");
+            click.initEvent("click", true, false);
+            link.dispatchEvent(click);          
         }
 
         var scene = createScene(); // scene displaying goes here...
