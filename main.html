@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CG Final Project</title>
+    <title>Interior Editor</title>
     <script src="https://preview.babylonjs.com/babylon.js"></script> <!-- import babylonjs -->
     <script src="https://preview.babylonjs.com/gui/babylon.gui.js"></script> <!-- GUI for babylonjs -->
     <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script> <!-- scene loaders -->
@@ -33,17 +33,24 @@
         var engine = new BABYLON.Engine(canvas, true); // initialise the engine
         var createScene = function(){
             var scene = new BABYLON.Scene(engine); // the scene
-            scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
-            scene.collisionsEnabled = true;
+            scene.gravity = new BABYLON.Vector3(0, -0.9, 0); // adds gravity
+            scene.collisionsEnabled = true; // allows collisions to be added
 
             var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene); // the light of the scene
 
             var camera1 = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 4, 25, new BABYLON.Vector3(0, 0, 0), scene); // viewing camera
-            var camera2 = new BABYLON.UniversalCamera("camera_1person", new BABYLON.Vector3(0, 2, -4), scene);
+            var camera2 = new BABYLON.UniversalCamera("camera_1person", new BABYLON.Vector3(0, 2, -4), scene); // first person camera
             camera1.attachControl(canvas, true); // attach camera to canvas
             camera2.checkCollisions = true;
             camera2.applyGravity = true;
 
+            // custom camera movement input
+            camera2.keysUp.push(87);    //W
+            camera2.keysLeft.push(65);  //A
+            camera2.keysRight.push(68); //S
+            camera2.keysDown.push(83);   //D
+
+            // functions to set the camera mode
             var setArcCam = function(){
                 scene.activeCamera = camera1;
                 camera1.attachControl(canvas, true);
@@ -58,15 +65,17 @@
 
             camera2.ellipsoid = new BABYLON.Vector3(1, 1, 1);
 
+            // so that objects can be controlled in gizmo
             var gizmoManager = new BABYLON.GizmoManager(scene);
             gizmoManager.attachableMeshes = [];
 
-            // create undeletable objects for walls and floors
-            var undeletable_meshes = [];
+            // create unpickable objects for walls and floors
+            var unpickable_meshes = [];
 
             var map = {}; //object for multiple key presses
             scene.actionManager = new BABYLON.ActionManager(scene);
 
+            // registering action of key presses
             scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
                 map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
             }));
@@ -75,11 +84,13 @@
                 map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
             }));
 
+            // boolean for setting the status mode of scene
             var delete_item = false;
             var clone_item = false;
 
+            // gizmo controls
             scene.registerBeforeRender(function () {
-                if ((map["z"] || map["Z"])) {
+                if ((map["z"] || map["Z"])) {               // position gizmo 
                     gizmoManager.positionGizmoEnabled = true;
                     gizmoManager.rotationGizmoEnabled = false;
                     gizmoManager.scaleGizmoEnabled = false;
@@ -87,7 +98,7 @@
                     delete_item = false;
                     clone_item = false;
                 };
-                if ((map["x"] || map["X"])) {
+                if ((map["x"] || map["X"])) {               // rotation gizmo
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = true;
                     gizmoManager.scaleGizmoEnabled = false;
@@ -95,7 +106,7 @@
                     delete_item = false;
                     clone_item = false;
                 };
-                if ((map["c"] || map["C"])) {
+                if ((map["c"] || map["C"])) {               // scaling and box gizmo
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = false;
                     gizmoManager.scaleGizmoEnabled = true;
@@ -103,7 +114,7 @@
                     delete_item = false;
                     clone_item = false;
                 };
-                if (map["v"] || map["V"]) {
+                if (map["v"] || map["V"]) {                 // cloning mode
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = false;
                     gizmoManager.scaleGizmoEnabled = false;
@@ -112,7 +123,7 @@
                     clone_item = true;
                     text1.text = "Current Status: Clone";
                 }
-                if (map["b"] || map["B"]){
+                if (map["b"] || map["B"]){                  // neutral mode
                     gizmoManager.attachToMesh(null);
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = false;
@@ -123,7 +134,7 @@
                     text1.text = "Current Status: Neutral";
                 };
 
-                if (map["n"] || map["N"]) {
+                if (map["n"] || map["N"]) {                 // delete mode
                     gizmoManager.attachToMesh(null);
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = false;
@@ -135,12 +146,13 @@
                 };
             });
 
+            // dipsose or clone mesh if criteria matches
             scene.onPointerDown = function(evt, pickResult) {
                 if (pickResult.pickedMesh) {
-                    if(!undeletable_meshes.includes(pickResult.pickedMesh) && delete_item == true){
+                    if(!unpickable_meshes.includes(pickResult.pickedMesh) && delete_item == true){
                         pickResult.pickedMesh.dispose();
                     }
-                    else if(clone_item == true){
+                    else if(!unpickable_meshes.includes(pickResult.pickedMesh)&& clone_item == true){
                         newclone = pickResult.pickedMesh.clone();
                         newclone.makeGeometryUnique();
                         newclone.position = new BABYLON.Vector3(0,6,0);
@@ -156,7 +168,7 @@
             var wallmat1 = new BABYLON.StandardMaterial("wallmat1", scene); // wall material
 	        wallmat1.diffuseTexture = new BABYLON.Texture("./materials/wallmat1.jpg", scene); // importing image for material
 
-            var wallmat2 = new BABYLON.StandardMaterial("wallmat2", scene); // brick2 material
+            var wallmat2 = new BABYLON.StandardMaterial("wallmat2", scene);
             wallmat2.diffuseTexture = new BABYLON.Texture("./materials/wallmat2.jpg", scene);
 
             var wallmat3 = new BABYLON.StandardMaterial("wallmat3", scene);
@@ -241,12 +253,16 @@
                 tileSize: 2
             }
 
+
+            // scene A ground
             var ground_a = new BABYLON.MeshBuilder.CreateTiledGround("ground_a", optground_a, scene); // create the ground
             ground_a.material = floormat1;
 
+            // scene B ground
             var ground_b = new BABYLON.MeshBuilder.CreateTiledGround("ground_b", optground_b, scene);
             ground_b.material = floormat1;
             
+            // scene A walls
             var wall_a1 = new BABYLON.MeshBuilder.CreateTiledBox("wall_a1", optwall_a1, scene); // create the wall for the ground to make room
             wall_a1.position = new BABYLON.Vector3(0, 2, 5.25);
             wall_a1.material = wallmat1;
@@ -265,6 +281,7 @@
             wall_a4.rotation.y -= Math.PI / 2;
             wall_a4.material = wallmat1;
 
+            // scene B walls
             var wall_b1 = new BABYLON.MeshBuilder.CreateTiledBox("wall_b1", optwall_b1, scene);
             wall_b1.position = new BABYLON.Vector3(0, 2, 12.25);
             wall_b1.material = wallmat1;
@@ -292,16 +309,17 @@
             wall_b6.rotation.y -= Math.PI / 2;
             wall_b6.material = wallmat1;
 
+            // set initial check collisions, unpickable objects and visiblity
             ground_a.checkCollisions = true;
             wall_a1.checkCollisions = true;
             wall_a2.checkCollisions = true;
             wall_a3.checkCollisions = true;
             wall_a4.checkCollisions = true;
-            undeletable_meshes.push(ground_a);
-            undeletable_meshes.push(wall_a1);
-            undeletable_meshes.push(wall_a2);
-            undeletable_meshes.push(wall_a3);
-            undeletable_meshes.push(wall_a4);
+            unpickable_meshes.push(ground_a);
+            unpickable_meshes.push(wall_a1);
+            unpickable_meshes.push(wall_a2);
+            unpickable_meshes.push(wall_a3);
+            unpickable_meshes.push(wall_a4);
 
             ground_b.isVisible = false;
             wall_b1.isVisible = false;
@@ -310,18 +328,20 @@
             wall_b4.isVisible = false;
             wall_b5.isVisible = false;
             wall_b6.isVisible = false;
-            undeletable_meshes.push(ground_b);
-            undeletable_meshes.push(wall_b1);
-            undeletable_meshes.push(wall_b2);
-            undeletable_meshes.push(wall_b3);
-            undeletable_meshes.push(wall_b4);
-            undeletable_meshes.push(wall_b5);
-            undeletable_meshes.push(wall_b6);
+            unpickable_meshes.push(ground_b);
+            unpickable_meshes.push(wall_b1);
+            unpickable_meshes.push(wall_b2);
+            unpickable_meshes.push(wall_b3);
+            unpickable_meshes.push(wall_b4);
+            unpickable_meshes.push(wall_b5);
+            unpickable_meshes.push(wall_b6);
 
             // GUI
              
             var ui = new BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene); // create the base ui
+            var text_ui = new BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("textUI", true, scene);
 
+            // button to change material of wall and floor
             var wall_but1 = new BABYLON.GUI.Button.CreateImageOnlyButton("wall_button", "./materials/wallmat1.jpg"); // create button
             wall_but1.width = "70px";
             wall_but1.height = "70px";
@@ -470,6 +490,7 @@
                 ground_b.material = floormat4;
             });
 
+            // object loader, custom and inside the file
             var sofa_add = new BABYLON.GUI.Button.CreateSimpleButton("sofa_add", "Sofa");
             sofa_add.width = "70px";
             sofa_add.height = "70px";
@@ -587,6 +608,7 @@
                 });
             });
 
+            // changing camera mode button
             var cam_uni = new BABYLON.GUI.Button.CreateSimpleButton("camera_uni", "First person view");
             cam_uni.width = "150px";
             cam_uni.height = "35px";
@@ -615,6 +637,7 @@
                 cam_uni.isVisible = true;
             });
 
+            // change scene buttons
             var room_a = new BABYLON.GUI.Button.CreateSimpleButton("swap_scene_a", "Scene A");
             room_a.width = "100px";
             room_a.height = "35px";
@@ -718,6 +741,7 @@
                 }
             });
 
+            // current status text box
             var text1 = new BABYLON.GUI.TextBlock();
             text1.text = "Current Status: Neutral";
             text1.color = "#aaaaaa";
@@ -773,7 +797,7 @@
                 
                 
             }
-                // set listener onto file uploader
+            // set listener onto file uploader
             input_form.addEventListener('change', handle_file, false);
 
             // create click event to click the input_form
@@ -783,6 +807,7 @@
                 
             });
 
+            // adding control on the ui
             ui.addControl(wall_but1);
             ui.addControl(wall_but2);
             ui.addControl(wall_but3);
@@ -801,9 +826,9 @@
             ui.addControl(cam_arc);
             ui.addControl(room_a);
             ui.addControl(room_b);
-            ui.addControl(text1);
             ui.addControl(save_scene);
             ui.addControl(upload_item);
+            text_ui.addControl(text1);
 
             cam_arc.isVisible = false;
 
