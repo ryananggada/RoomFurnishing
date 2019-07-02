@@ -4,19 +4,19 @@ sceneloader.html to see saved scene
 
 Controls:
 
-z for x, y or z movement.
+Z for x, y or z movement.
 
-x for rotation on x,y or z.
+X for rotation on x,y or z.
 
-c for scaling and dragging movement.
+C for scaling and dragging movement.
 
-v for clone object.
+V for clone object.
 
-b for neutral state.
+B for neutral state.
 
-n for delete state.
+N for delete state.
 
-arrow keys for movement in first person.
+Arrow keys or WASD for movement in first person.
 
 
 References and Credit
