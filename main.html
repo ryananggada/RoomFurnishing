@@ -804,6 +804,19 @@
                     }
                     catch(error){
                         console.log(error);
+                        console.log("Trying second method");
+                        try{
+                            for (var i = 0; i < meshes.length; i++) {
+                                gizmoManager.attachableMeshes.push(meshes[i]);
+                            }
+                        }
+                        catch(error){
+                            console.log("Trying third method");
+                        }
+                        
+                        mesh.checkCollisions = true;
+                        mesh.position = new BABYLON.Vector3(0,6,0);
+                        return;
                     }
                     mesh.checkCollisions = true;
                     mesh.position = new BABYLON.Vector3(0,6,0);
