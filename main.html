@@ -54,13 +54,13 @@
             var setArcCam = function(){
                 scene.activeCamera = camera1;
                 camera1.attachControl(canvas, true);
-                camera1.target = new BABYLON.Vector3(0, 0, 0);
+                camera1.radius = 25;
             };
 
             var setUniCam = function(){
                 scene.activeCamera = camera2;
                 camera2.attachControl(canvas, true);
-                camera2.target = new BABYLON.Vector3(0, 2, -4);
+                camera2.position = new BABYLON.Vector3(0, 2, -4);
             };
 
             camera2.ellipsoid = new BABYLON.Vector3(1, 1, 1);
@@ -90,7 +90,7 @@
 
             // gizmo controls
             scene.registerBeforeRender(function () {
-                if ((map["z"] || map["Z"])) {               // position gizmo 
+                if (map["z"]) {               // position gizmo 
                     gizmoManager.positionGizmoEnabled = true;
                     gizmoManager.rotationGizmoEnabled = false;
                     gizmoManager.scaleGizmoEnabled = false;
@@ -98,7 +98,7 @@
                     delete_item = false;
                     clone_item = false;
                 };
-                if ((map["x"] || map["X"])) {               // rotation gizmo
+                if (map["x"]) {               // rotation gizmo
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = true;
                     gizmoManager.scaleGizmoEnabled = false;
@@ -106,7 +106,7 @@
                     delete_item = false;
                     clone_item = false;
                 };
-                if ((map["c"] || map["C"])) {               // scaling and box gizmo
+                if (map["c"]) {               // scaling and box gizmo
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = false;
                     gizmoManager.scaleGizmoEnabled = true;
@@ -114,7 +114,7 @@
                     delete_item = false;
                     clone_item = false;
                 };
-                if (map["v"] || map["V"]) {                 // cloning mode
+                if (map["v"]) {                 // cloning mode
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = false;
                     gizmoManager.scaleGizmoEnabled = false;
@@ -123,7 +123,7 @@
                     clone_item = true;
                     text1.text = "Current Status: Clone";
                 }
-                if (map["b"] || map["B"]){                  // neutral mode
+                if (map["b"]){                  // neutral mode
                     gizmoManager.attachToMesh(null);
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = false;
@@ -134,7 +134,7 @@
                     text1.text = "Current Status: Neutral";
                 };
 
-                if (map["n"] || map["N"]) {                 // delete mode
+                if (map["n"]) {                 // delete mode
                     gizmoManager.attachToMesh(null);
                     gizmoManager.positionGizmoEnabled = false;
                     gizmoManager.rotationGizmoEnabled = false;
@@ -157,7 +157,6 @@
                         newclone.makeGeometryUnique();
                         newclone.position = new BABYLON.Vector3(0,6,0);
                         gizmoManager.attachableMeshes.push(newclone);
-
                     }
                 };
             };
@@ -300,10 +299,22 @@
             wall_b4.rotation.y -= Math.PI / 2;
             wall_b4.material = wallmat1;
 
-            var wall_b5 = new BABYLON.MeshBuilder.CreateTiledBox("wall_b5", optwall_b1, scene);
+            var wall_rawb5 = new BABYLON.MeshBuilder.CreateTiledBox("wall_b5", optwall_b1, scene);
+            wall_rawb5.material = wallmat1;
+            wall_rawb5.position = new BABYLON.Vector3(0, 2, 0);
+            var door_hole = new BABYLON.MeshBuilder.CreateTiledBox("door_hole", {width:2.5, height:3.5, depth:0.75}, scene);
+            door_hole.position = new BABYLON.Vector3(-6, 1.5, 0);
+            var door_hole2 = new BABYLON.MeshBuilder.CreateTiledBox("door_hole2", {width:2.5, height:3.5, depth:0.75}, scene);
+            door_hole2.position = new BABYLON.Vector3(6, 1.5, 0);
+
+            // to make holes on walls for doors
+            var wallb5CSG = BABYLON.CSG.FromMesh(wall_rawb5);
+            wallb5CSG.subtractInPlace(BABYLON.CSG.FromMesh(door_hole));
+            wallb5CSG.subtractInPlace(BABYLON.CSG.FromMesh(door_hole2));
+
+            var wall_b5 = wallb5CSG.toMesh("wall_b5", wallmat1, scene);
             wall_b5.position = new BABYLON.Vector3(0, 2, 0);
-            wall_b5.material = wallmat1;
-            
+
             var wall_b6 = new BABYLON.MeshBuilder.CreateTiledBox("wall_b6", optwall_b3, scene);
             wall_b6.position = new BABYLON.Vector3(0, 2, 6.125);
             wall_b6.rotation.y -= Math.PI / 2;
@@ -335,6 +346,10 @@
             unpickable_meshes.push(wall_b4);
             unpickable_meshes.push(wall_b5);
             unpickable_meshes.push(wall_b6);
+
+            wall_rawb5.isVisible = false;
+            door_hole.isVisible = false;
+            door_hole2.isVisible = false;
 
             // GUI
              
@@ -717,8 +732,8 @@
                     wall_b2.checkCollisions = true;
                     wall_b3.checkCollisions = true;
                     wall_b4.checkCollisions = true;
-                    wall_b5.checkCollisions = false;
-                    wall_b6.checkCollisions = false;
+                    wall_b5.checkCollisions = true;
+                    wall_b6.checkCollisions = true;
                     
                     for (var i = 0; i < gizmoManager.attachableMeshes.length; i++) {
                         gizmoManager.attachableMeshes[i].dispose();
