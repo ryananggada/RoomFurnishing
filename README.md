@@ -4,6 +4,8 @@ This is a JavaScript 3D Graphics Application that was created for my University 
 
 <img src="roomPreview.png">
 
+<i>Created by: Ryan Anggada Kho, Georgius Kurli and Nicolas Lee</i>
+
 ## How to run this program
 
 Download XAMPP and then, place all of this files downloaded in its htdocs file and run via localhost.
