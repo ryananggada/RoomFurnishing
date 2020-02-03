@@ -1,9 +1,22 @@
-main.html for main program
+# RoomFurnishing
 
-sceneloader.html to see saved scene
+This is a JavaScript 3D Graphics Application that was created for my University project. It is designed to help users create and decorate their room of their dreams.
 
-Controls:
+<img src="roomPreview.png">
 
+## How to run this program
+
+Download XAMPP and then, place all of this files downloaded in its htdocs file and run via localhost.
+
+## File Information
+
+main.html: Main program
+
+sceneloader.html: View saved scene
+
+## Controls
+
+```
 Z for x, y or z movement.
 
 X for rotation on x,y or z.
@@ -17,9 +30,9 @@ B for neutral state.
 N for delete state.
 
 Arrow keys or WASD for movement in first person.
+```
 
-
-References and Credit
+## References and Credit
 
 Wall Tile 1: http://wallperio.com/download-wp/595488629.html
 
