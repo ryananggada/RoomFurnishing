@@ -44,7 +44,7 @@ Floor Tile 1: https://pixabay.com/illustrations/white-pattern-tile-abstract-floo
 
 Floor Tile 2: https://www.freepik.com/free-vector/wood-board-texture_841463.htm
  
-Furniture Models
+# Furniture Models
 
 Bed: https://clara.io/view/f8ac4d03-76cd-4ed9-8e07-0aa4af9dc68e
 
